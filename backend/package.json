@@ -29,5 +29,12 @@
     "express": "^5.2.1",
     "firebase-admin": "^14.0.0",
     "googleapis": "^171.4.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "esbuild",
+      "protobufjs"
+    ]
   }
 }
