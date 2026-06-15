@@ -1,14 +1,24 @@
-import { Button } from "@/components/ui/button"
+import { Navigate, Route, Routes } from "react-router-dom"
+import { RequireAuth } from "@/auth/RequireAuth"
+import AuthCallbackPage from "@/pages/AuthCallback"
+import DashboardPage from "@/pages/Dashboard"
+import SignInPage from "@/pages/SignIn"
 
 function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background text-foreground">
-      <h1 className="text-3xl font-semibold tracking-tight">Finance Agent</h1>
-      <p className="text-muted-foreground">
-        Vite + React + Tailwind CSS + shadcn/ui is ready.
-      </p>
-      <Button>Click me</Button>
-    </div>
+    <Routes>
+      <Route path="/sign-in" element={<SignInPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route
+        path="/"
+        element={
+          <RequireAuth>
+            <DashboardPage />
+          </RequireAuth>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 
