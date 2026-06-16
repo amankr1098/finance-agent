@@ -1,8 +1,8 @@
 import axios from "axios";
 import { auth } from "./firebase";
+import { config } from "./config";
 
-export const API_BASE_URL: string =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+export const API_BASE_URL: string = config.API_BASE_URL;
 
 /**
  * URL the user is sent to in order to start the Google OAuth consent flow.
