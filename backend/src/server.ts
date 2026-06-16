@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { processEmails } from "./scheduler/pollEmails.js";
 import oauthRoutes from "./auth/oauthRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
@@ -30,15 +29,8 @@ app.get("/", (_req, res) => {
 // OAuth flow (browser-driven, no auth required)
 app.use(oauthRoutes);
 
-// Protected API
+// Protected API (includes /api/poll-emails and /api/poll-status)
 app.use("/api", userRoutes);
-
-// Legacy single-user endpoint — will be migrated to /api/poll-emails (per user)
-app.get("/poll-emails", async (_req, res) => {
-  const response = await processEmails();
-  console.log("Finished processing emails.");
-  res.json({ success: true, data: response });
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -102,3 +102,29 @@ export async function setSheetId(uid: string, sheetId: string): Promise<void> {
     { merge: true }
   );
 }
+
+export interface PollStatus {
+  lastPolledAt: Timestamp | null;
+  isPolling: boolean;
+  totalEmailsProcessed: number;
+  financeEmailsFound: number;
+  error?: string | null;
+}
+
+export async function getPollStatus(uid: string): Promise<PollStatus | null> {
+  const snap = await db().collection(USERS).doc(uid).get();
+  if (!snap.exists) return null;
+  const data = snap.data();
+  if (!data?.pollStatus) return null;
+  return data.pollStatus as PollStatus;
+}
+
+export async function setPollStatus(
+  uid: string,
+  status: Partial<PollStatus>
+): Promise<void> {
+  await db()
+    .collection(USERS)
+    .doc(uid)
+    .set({ pollStatus: status, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+}

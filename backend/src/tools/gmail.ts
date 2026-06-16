@@ -1,6 +1,8 @@
 import { gmail_v1, google } from "googleapis";
 import { getAuthClient } from "../auth/google.js";
 
+type OAuth2Client = ReturnType<typeof getAuthClient>;
+
 export type FetchOptionMode = "unprocessed" | "backfill" | "reprocess";
 
 export interface FetchOptions {
@@ -10,11 +12,11 @@ export interface FetchOptions {
     before?: string;   // ISO format date string, required for backfill mode
 }
 
-function getMailClient() {
-    return google.gmail({ version: "v1", auth: getAuthClient() });
+function getMailClient(authClient?: OAuth2Client) {
+    return google.gmail({ version: "v1", auth: authClient ?? getAuthClient() });
 }
 
-export async function fetchEmails(options: FetchOptions) {
+export async function fetchEmails(options: FetchOptions, authClient?: OAuth2Client) {
     const mode = options.mode;
     let query = "";
     switch (mode) {
@@ -35,7 +37,7 @@ export async function fetchEmails(options: FetchOptions) {
             ].filter(Boolean).join(" ");
             break;
     }
-    const gmail = getMailClient();
+    const gmail = getMailClient(authClient);
     const response = await gmail.users.messages.list({
         userId: "me",
         q: query,
@@ -49,8 +51,8 @@ export async function fetchEmails(options: FetchOptions) {
 // })
 
 
-export async function getMailBody(messageId: string): Promise<{ subject: string; from: string; body: string }> {
-    const gmail = getMailClient();
+export async function getMailBody(messageId: string, authClient?: OAuth2Client): Promise<{ subject: string; from: string; body: string }> {
+    const gmail = getMailClient(authClient);
     const response = await gmail.users.messages.get({
         userId: "me",
         id: messageId,
@@ -97,8 +99,8 @@ function extractBody(payload: gmail_v1.Schema$MessagePart): string {
 }
 
 
-async function getOrCreateLabel(labelName: string): Promise<string> {
-    const gmail = getMailClient();
+async function getOrCreateLabel(labelName: string, authClient?: OAuth2Client): Promise<string> {
+    const gmail = getMailClient(authClient);
     const res = await gmail.users.labels.list({ userId: "me" });
     const labels = res.data.labels || [];
     const existingLabel = labels.find(label => label.name === labelName);
@@ -118,9 +120,9 @@ async function getOrCreateLabel(labelName: string): Promise<string> {
 }
 
 
-async function markEmailAsProcessed(messageId: string) {
-    const labelId = await getOrCreateLabel("finance-processed");
-    const gmail = getMailClient();
+export async function markEmailAsProcessed(messageId: string, authClient?: OAuth2Client) {
+    const labelId = await getOrCreateLabel("finance-processed", authClient);
+    const gmail = getMailClient(authClient);
     await gmail.users.messages.modify({
         userId: "me",
         id: messageId,

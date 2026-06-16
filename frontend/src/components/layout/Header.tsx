@@ -24,6 +24,8 @@ export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // console.log("Header render, user:", user);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/sign-in", { replace: true });

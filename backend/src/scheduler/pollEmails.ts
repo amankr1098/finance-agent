@@ -1,18 +1,34 @@
 import { classifyAgent, financeAgent } from "../agent/agent.js";
 import { ExpenseInput, ExpenseOutput } from "../agent/state.js";
 import { classifyEmail } from "../agent/tasks/classifyEmail.js";
-import { fetchEmails, getMailBody } from "../tools/gmail.js";
+import { fetchEmails, getMailBody, markEmailAsProcessed } from "../tools/gmail.js";
+import { getAuthClientForUser } from "../auth/google.js";
+import { getUser } from "../db/users.js";
+import { saveFinanceEmail, saveExpense } from "../db/expenses.js";
 
+export interface ProcessEmailsResult {
+    listFinance: ExpenseOutput[];
+    listSubject: string[];
+}
 
-
-export async function processEmails() {
+export async function processEmails(uid?: string): Promise<ProcessEmailsResult | undefined> {
     console.log("Polling for emails...");
-    const messages = await fetchEmails({ mode: "unprocessed", maxResults: 15 });
+
+    let authClient: Awaited<ReturnType<typeof getAuthClientForUser>> | undefined;
+    let sheetId: string | undefined;
+
+    if (uid) {
+        authClient = await getAuthClientForUser(uid);
+        const user = await getUser(uid);
+        sheetId = user?.sheetId ?? undefined;
+    }
+
+    const messages = await fetchEmails({ mode: "unprocessed", maxResults: 15 }, authClient);
 
 
     if (messages.length === 0) {
         console.log("No new emails found.");
-        return;
+        return { listFinance: [], listSubject: [] };
     }
 
     console.log(`Found ${messages.length} new email(s). Processing...`);
@@ -24,7 +40,7 @@ export async function processEmails() {
     for (const message of messages) {
         console.log("New email found with ID:", message.id);
         // Here you would typically trigger your agent workflow, passing the email ID and other necessary details
-        const { subject, from, body } = await getMailBody(message.id!);
+        const { subject, from, body } = await getMailBody(message.id!, authClient);
 
         listSubject.push(subject);
 
@@ -42,6 +58,16 @@ export async function processEmails() {
             continue;
         }
 
+        // Persist finance-classified email record
+        if (uid) {
+            await saveFinanceEmail(uid, {
+                emailId: message.id!,
+                subject,
+                from,
+                category: classification.category,
+            });
+        }
+
 
 
         try {
@@ -51,8 +77,8 @@ export async function processEmails() {
                 emailId: message.id!,
                 subject,
                 from,
-                accessToken: process.env.GOOGLE_REFRESH_TOKEN ? process.env.GOOGLE_REFRESH_TOKEN : "",
-                sheetId: process.env.GOOGLE_SHEET_ID ? process.env.GOOGLE_SHEET_ID : "",
+                accessToken: process.env.GOOGLE_REFRESH_TOKEN ?? "",
+                sheetId: sheetId ?? process.env.GOOGLE_SHEET_ID ?? "",
                 category: classification.category
             }
             const result = await financeAgent.invoke(input, {
@@ -60,21 +86,23 @@ export async function processEmails() {
                     thread_id: (message.id + "_expense_extractor")!
                 }
             });
-            if (classification.isFinance) {
-                listFinance.push({ emailId: message.id!, subject, from, category: classification.category, extractedResults: result });
+            const expenseOutput = { emailId: message.id!, subject, from, category: classification.category, extractedResults: result };
+            listFinance.push(expenseOutput);
+
+            // Persist extracted expense to its own collection
+            if (uid) {
+                await saveExpense(uid, expenseOutput);
             }
         } catch (error) {
             console.error(`Error processing email with ID ${message.id}:`, error);
         }
 
-
-
-
-
-
-        setTimeout(() => {
-            console.log("Executed after 2 seconds");
-        }, 2000);
+        // Label email as processed so it is excluded from future polls
+        try {
+            await markEmailAsProcessed(message.id!, authClient);
+        } catch (error) {
+            console.error(`Failed to label email ${message.id} as processed:`, error);
+        }
 
     }
 

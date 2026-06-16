@@ -107,9 +107,16 @@ router.get("/auth/google/callback", async (req: Request, res: Response) => {
       scopes: grantedScopes.length > 0 ? grantedScopes : GOOGLE_SCOPES,
     });
 
-    const customToken = await adminAuth().createCustomToken(sub, {
+    // Sync profile fields into the Firebase Auth record so that the client-side
+    // User object returned by onAuthStateChanged has email, displayName and
+    // photoURL populated after signInWithCustomToken.
+    await adminAuth().updateUser(sub, {
       email: profile.email,
+      displayName: profile.name ?? "",
+      photoURL: profile.picture ?? "",
     });
+
+    const customToken = await adminAuth().createCustomToken(sub);
 
     const frontendUrl = (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
     const redirect = `${frontendUrl}/auth/callback?token=${encodeURIComponent(customToken)}`;
