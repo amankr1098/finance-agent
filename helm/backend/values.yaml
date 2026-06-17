@@ -1,0 +1,131 @@
+# Global values — automatically passed from the umbrella chart.
+# Set these here only when deploying this sub-chart standalone.
+global:
+  baseDomain: ""             # e.g. apps.i40sno-acm.mavdallab.com
+  backendSubdomain: finance-agent-api
+  frontendSubdomain: finance-agent
+
+replicaCount: 1
+
+image:
+  repository: finance-agent-backend
+  pullPolicy: IfNotPresent
+  # Override with your registry tag, e.g. "v1.2.0" or a git SHA
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Whether to create a dedicated ServiceAccount for this workload
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.finance-agent.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: finance-agent-backend-tls
+  #   hosts:
+  #     - api.finance-agent.example.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ---------------------------------------------------------------------------
+# Non-sensitive environment variables (stored in a ConfigMap)
+# ---------------------------------------------------------------------------
+env:
+  PORT: "8000"
+  NODE_ENV: "production"
+  # Public-facing URL of this backend service
+  BACKEND_URL: "http://localhost:8000"
+  # Comma-separated list of allowed frontend origins for CORS
+  FRONTEND_URL: "http://localhost:5173"
+  # Firebase project ID (non-secret)
+  FIREBASE_PROJECT_ID: ""
+  # Google Sheet ID for expense logging
+  SHEET_ID: ""
+
+# ---------------------------------------------------------------------------
+# Sensitive environment variables (stored in a Kubernetes Secret)
+# Set these via --set secrets.<KEY>=<VALUE> or use an external secret manager.
+# ---------------------------------------------------------------------------
+secrets:
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  # Optional: only needed for legacy single-user polling mode
+  GOOGLE_REFRESH_TOKEN: ""
+  GEMINI_API_KEY: ""
+  OPENROUTER_API_KEY: ""
+  # Paste the raw JSON (or base64-encoded JSON) of your Firebase service-account key
+  FIREBASE_SERVICE_ACCOUNT_JSON: ""
+  # 32-byte hex secret — generate with: openssl rand -hex 32
+  APP_SECRET: ""
+
+# ---------------------------------------------------------------------------
+# External Secret (optional) — reference an existing Secret instead of
+# creating one from the values above.
+# ---------------------------------------------------------------------------
+existingSecret: ""

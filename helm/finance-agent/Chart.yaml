@@ -1,0 +1,26 @@
+apiVersion: v2
+name: finance-agent
+description: >
+  Umbrella Helm chart that deploys the complete Finance Agent stack —
+  backend (Node.js/Express) and frontend (React/Nginx) — as a single release.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - finance
+  - agent
+  - fullstack
+maintainers:
+  - name: finance-agent
+
+# Sub-charts are resolved from the sibling directories.
+# Run `helm dependency update helm/finance-agent` to package them into charts/.
+dependencies:
+  - name: finance-agent-backend
+    version: "0.1.0"
+    repository: "file://../backend"
+    alias: backend
+  - name: finance-agent-frontend
+    version: "0.1.0"
+    repository: "file://../frontend"
+    alias: frontend

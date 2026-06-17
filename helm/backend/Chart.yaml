@@ -1,0 +1,13 @@
+apiVersion: v2
+name: finance-agent-backend
+description: Helm chart for the Finance Agent backend (Node.js/Express API)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - finance
+  - agent
+  - backend
+  - nodejs
+maintainers:
+  - name: finance-agent

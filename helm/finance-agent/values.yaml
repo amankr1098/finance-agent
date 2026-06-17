@@ -1,0 +1,127 @@
+# ===========================================================================
+# Finance Agent — Umbrella Chart Values
+#
+# !! CHANGE THIS ONE VALUE TO DEPLOY TO A DIFFERENT DOMAIN !!
+#
+#   global.baseDomain — the wildcard ingress domain of your cluster.
+#   All hostnames are derived from it automatically:
+#     backend  → http://finance-agent-api.<baseDomain>
+#     frontend → http://finance-agent.<baseDomain>
+#
+# Deploy:
+#   helm install finance-agent helm/finance-agent -n <namespace> --create-namespace
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# SINGLE SOURCE OF TRUTH — change only this block to move environments
+# ---------------------------------------------------------------------------
+global:
+  baseDomain: apps.i40sno-acm.mavdallab.com
+  # Subdomain prefixes (change if you want different hostnames)
+  backendSubdomain: finance-agent-api
+  frontendSubdomain: finance-agent
+
+# ---------------------------------------------------------------------------
+# Backend sub-chart overrides  (alias: backend)
+# ---------------------------------------------------------------------------
+backend:
+  replicaCount: 1
+
+  image:
+    repository: finance-agent-backend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  ingress:
+    enabled: true
+    className: "nginx"   # adjust if your ingress controller uses a different class
+    annotations: {}
+    # host is computed automatically: <global.backendSubdomain>.<global.baseDomain>
+    tls: []
+
+  # Non-sensitive runtime config
+  env:
+    PORT: "8000"
+    NODE_ENV: "production"
+    # BACKEND_URL and FRONTEND_URL are computed from global.baseDomain in the configmap template
+    FIREBASE_PROJECT_ID: ""
+    SHEET_ID: ""
+    FIREBASE_PROJECT_ID: ""
+    SHEET_ID: ""
+
+  # Sensitive values — override with --set or an external secret manager
+  secrets:
+    GOOGLE_CLIENT_ID: ""
+    GOOGLE_CLIENT_SECRET: ""
+    GOOGLE_REFRESH_TOKEN: ""
+    GEMINI_API_KEY: ""
+    OPENROUTER_API_KEY: ""
+    FIREBASE_SERVICE_ACCOUNT_JSON: ""
+    APP_SECRET: ""
+
+  # Reference a pre-existing Secret instead of creating one from secrets above
+  existingSecret: ""
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+# ---------------------------------------------------------------------------
+# Frontend sub-chart overrides  (alias: frontend)
+# ---------------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: finance-agent-frontend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    className: "nginx"   # adjust if your ingress controller uses a different class
+    annotations: {}
+    # host is computed automatically: <global.frontendSubdomain>.<global.baseDomain>
+    tls: []
+
+  # Runtime config injected into /config.js by entrypoint.sh
+  config:
+    # API_BASE_URL is computed from global.baseDomain in the configmap template
+    FIREBASE_API_KEY: ""
+    FIREBASE_AUTH_DOMAIN: ""
+    FIREBASE_PROJECT_ID: ""
+    FIREBASE_STORAGE_BUCKET: ""
+    FIREBASE_MESSAGING_SENDER_ID: ""
+    FIREBASE_APP_ID: ""
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80

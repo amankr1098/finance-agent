@@ -1,0 +1,21 @@
+{
+  // Associate all Helm template files with the "helm-template" language registered
+  // by the Helm Intellisense extension (Tim-Koehler.helm-intellisense).
+  // This gives Go template syntax highlighting + value/helper auto-complete and
+  // prevents the YAML language server from reporting false-positive parse errors
+  // on {{ }} directives.
+  "files.associations": {
+    "**/helm/**/templates/*.yaml": "helm-template",
+    "**/helm/**/templates/*.tpl": "helm-template",
+    "**/helm/**/_helpers.tpl": "helm-template",
+    "**/helm/**/templates/NOTES.txt": "helm-template"
+  },
+  // Exclude Helm template directories from YAML schema validation entirely —
+  // the helm-template language handles these files instead.
+  "yaml.schemas": {
+    "kubernetes": "!(helm/**/templates/**)"
+  },
+  "[yaml]": {
+    "editor.formatOnSave": false
+  }
+}

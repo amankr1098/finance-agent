@@ -1,0 +1,26 @@
+{{- $baseDomain := .Values.global.baseDomain | default "" -}}
+{{- $backendSubdomain := .Values.global.backendSubdomain | default "finance-agent-api" -}}
+{{- $frontendSubdomain := .Values.global.frontendSubdomain | default "finance-agent" -}}
+{{- $backendURL := .Values.env.BACKEND_URL -}}
+{{- $frontendURL := .Values.env.FRONTEND_URL -}}
+{{- if $baseDomain -}}
+{{- $backendURL = printf "http://%s.%s" $backendSubdomain $baseDomain -}}
+{{- $frontendURL = printf "http://%s.%s" $frontendSubdomain $baseDomain -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "finance-agent-backend.configmapName" . }}
+  labels:
+    {{- include "finance-agent-backend.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.env.PORT | quote }}
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  BACKEND_URL: {{ $backendURL | quote }}
+  FRONTEND_URL: {{ $frontendURL | quote }}
+  {{- if .Values.env.FIREBASE_PROJECT_ID }}
+  FIREBASE_PROJECT_ID: {{ .Values.env.FIREBASE_PROJECT_ID | quote }}
+  {{- end }}
+  {{- if .Values.env.SHEET_ID }}
+  SHEET_ID: {{ .Values.env.SHEET_ID | quote }}
+  {{- end }}

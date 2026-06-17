@@ -1,0 +1,41 @@
+Finance Agent stack has been deployed!
+
+  Release:    {{ .Release.Name }}
+  Namespace:  {{ .Release.Namespace }}
+  Chart:      {{ .Chart.Name }}-{{ .Chart.Version }}
+
+Components deployed:
+  • backend   — Node.js/Express API (port 8000)
+  • frontend  — React/Nginx SPA    (port 80)
+
+---
+To check pod status:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+To view logs:
+
+  # Backend
+  kubectl logs -n {{ .Release.Namespace }} -l "app.kubernetes.io/name=finance-agent-backend" --tail=50
+
+  # Frontend
+  kubectl logs -n {{ .Release.Namespace }} -l "app.kubernetes.io/name=finance-agent-frontend" --tail=50
+
+---
+Quick port-forward access (no Ingress required):
+
+  # Backend API
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Release.Name }}-finance-agent-backend 8000:8000
+
+  # Frontend UI
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Release.Name }}-finance-agent-frontend 8080:80
+
+Then open: http://localhost:8080
+
+---
+To upgrade with new secret values:
+
+  helm upgrade {{ .Release.Name }} helm/finance-agent \
+    --set backend.secrets.GOOGLE_CLIENT_ID=<id> \
+    --set backend.secrets.APP_SECRET=<secret> \
+    ...
