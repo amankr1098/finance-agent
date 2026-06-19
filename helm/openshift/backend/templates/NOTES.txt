@@ -1,0 +1,33 @@
+1. Finance Agent Backend (OpenShift) has been deployed.
+
+   Chart version:   {{ .Chart.Version }}
+   App version:     {{ .Chart.AppVersion }}
+   Release name:    {{ .Release.Name }}
+   Namespace:       {{ .Release.Namespace }}
+
+2. Get the backend URL:
+
+{{- if .Values.ingress.enabled }}
+{{- $baseDomain := .Values.global.baseDomain | default "" }}
+{{- $subdomain := .Values.global.backendSubdomain | default "finance-agent-api" }}
+{{- if $baseDomain }}
+  http://{{ $subdomain }}.{{ $baseDomain }}
+{{- else }}
+  oc get ingress {{ include "finance-agent-backend.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.rules[0].host}'
+{{- end }}
+{{- else }}
+  export POD_NAME=$(oc get pods --namespace {{ .Release.Namespace }} -l "{{ include "finance-agent-backend.selectorLabels" . }}" -o jsonpath="{.items[0].metadata.name}")
+  oc --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8000:{{ .Values.env.PORT }}
+  echo "Backend URL: http://127.0.0.1:8000"
+{{- end }}
+
+3. Ensure the Secret {{ include "finance-agent-backend.secretName" . }} contains valid values
+   for GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, APP_SECRET, and FIREBASE_SERVICE_ACCOUNT_JSON
+   before connecting a frontend or running the email poller.
+
+4. OpenShift notes:
+   - The pod runs under an arbitrary UID assigned by the namespace SCC (restricted-v2 by default).
+   - Ensure you built the image with Dockerfile.openshift (chgrp -R 0 / chmod -R g=u).
+   - Ingress class used: {{ .Values.ingress.className }}
+   - If you need a specific SCC, bind it to the ServiceAccount:
+       oc adm policy add-scc-to-user <scc> -z {{ include "finance-agent-backend.serviceAccountName" . }} -n {{ .Release.Namespace }}

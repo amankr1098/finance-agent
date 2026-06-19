@@ -1,0 +1,98 @@
+# Global values — automatically passed from the umbrella chart.
+# Set these here only when deploying this sub-chart standalone.
+global:
+  baseDomain: ""             # e.g. apps.i40sno-acm.mavdallab.com
+  backendSubdomain: finance-agent-api
+  frontendSubdomain: finance-agent
+
+replicaCount: 1
+
+image:
+  repository: finance-agent-frontend
+  pullPolicy: IfNotPresent
+  # Override with your registry tag, e.g. "v1.2.0" or a git SHA
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# OpenShift SCCs assign an arbitrary UID from the namespace range, so we must
+# NOT pin runAsUser or fsGroup here — Dockerfile.openshift handles arbitrary-UID
+# access via `chgrp -R 0 && chmod -R g=u`, and uses nginxinc/nginx-unprivileged.
+podSecurityContext:
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# nginxinc/nginx-unprivileged listens on 8080 (required for OpenShift)
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "openshift-default"
+  annotations: {}
+  tls: []
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 3
+  periodSeconds: 10
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ---------------------------------------------------------------------------
+# Runtime configuration injected into /config.js by entrypoint.sh
+# All values end up as window.__CONFIG__ in the browser — none are secret.
+# ---------------------------------------------------------------------------
+config:
+  # URL of the backend API reachable from the browser
+  API_BASE_URL: ""
+  # Firebase web-app config (these are client-side keys, not server secrets)
+  FIREBASE_API_KEY: ""
+  FIREBASE_AUTH_DOMAIN: ""
+  FIREBASE_PROJECT_ID: ""
+  FIREBASE_STORAGE_BUCKET: ""
+  FIREBASE_MESSAGING_SENDER_ID: ""
+  FIREBASE_APP_ID: ""

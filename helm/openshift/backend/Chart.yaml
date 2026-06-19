@@ -1,0 +1,17 @@
+apiVersion: v2
+name: finance-agent-backend
+description: >
+  Helm chart for the Finance Agent backend (Node.js/Express API) — OpenShift edition.
+  Uses OpenShift Routes instead of Ingress, and drops runAsUser/fsGroup so OpenShift
+  SCCs can assign an arbitrary UID from the namespace range.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - finance
+  - agent
+  - backend
+  - nodejs
+  - openshift
+maintainers:
+  - name: finance-agent

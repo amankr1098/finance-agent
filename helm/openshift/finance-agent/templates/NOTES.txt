@@ -1,0 +1,20 @@
+Finance Agent has been deployed on OpenShift!
+
+Backend Route:
+  https://{{ .Values.global.backendSubdomain }}.{{ .Values.global.baseDomain }}
+
+Frontend Route:
+  https://{{ .Values.global.frontendSubdomain }}.{{ .Values.global.baseDomain }}
+
+To verify all Routes are admitted:
+  oc get route -n {{ .Release.Namespace }}
+
+To check pod status:
+  oc get pods -n {{ .Release.Namespace }}
+
+OpenShift notes:
+  - Pods run under an arbitrary UID assigned by the namespace SCC (restricted-v2).
+  - Images must be built with Dockerfile.openshift.
+  - The frontend nginx listener is on port 8080; the Route handles external TLS.
+  - Secrets are stored in a Kubernetes Secret — consider using an external secret
+    manager (e.g., HashiCorp Vault, OpenShift Secrets Store CSI) for production.

@@ -1,0 +1,9 @@
+dependencies:
+- name: finance-agent-backend
+  repository: file://../backend
+  version: 0.1.0
+- name: finance-agent-frontend
+  repository: file://../frontend
+  version: 0.1.0
+digest: sha256:bc61416070bf052e8d7dde8c23e15a892ea83ef01ecc51a694c51816ae0700d0
+generated: "2026-06-18T14:47:34.8884522+05:30"

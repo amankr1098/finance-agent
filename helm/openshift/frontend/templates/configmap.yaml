@@ -1,0 +1,22 @@
+{{- $baseDomain := .Values.global.baseDomain | default "" -}}
+{{- $backendSubdomain := .Values.global.backendSubdomain | default "finance-agent-api" -}}
+{{- $apiBaseURL := .Values.config.API_BASE_URL -}}
+{{- if $baseDomain -}}
+{{- $apiBaseURL = printf "http://%s.%s" $backendSubdomain $baseDomain -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "finance-agent-frontend.configmapName" . }}
+  labels:
+    {{- include "finance-agent-frontend.labels" . | nindent 4 }}
+data:
+  # These values are injected into /config.js at container start by entrypoint.sh
+  # and become window.__CONFIG__ in the browser.
+  API_BASE_URL: {{ $apiBaseURL | quote }}
+  FIREBASE_API_KEY: {{ .Values.config.FIREBASE_API_KEY | quote }}
+  FIREBASE_AUTH_DOMAIN: {{ .Values.config.FIREBASE_AUTH_DOMAIN | quote }}
+  FIREBASE_PROJECT_ID: {{ .Values.config.FIREBASE_PROJECT_ID | quote }}
+  FIREBASE_STORAGE_BUCKET: {{ .Values.config.FIREBASE_STORAGE_BUCKET | quote }}
+  FIREBASE_MESSAGING_SENDER_ID: {{ .Values.config.FIREBASE_MESSAGING_SENDER_ID | quote }}
+  FIREBASE_APP_ID: {{ .Values.config.FIREBASE_APP_ID | quote }}

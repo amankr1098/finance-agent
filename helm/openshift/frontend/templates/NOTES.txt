@@ -1,0 +1,30 @@
+1. Finance Agent Frontend (OpenShift) has been deployed.
+
+   Chart version:   {{ .Chart.Version }}
+   App version:     {{ .Chart.AppVersion }}
+   Release name:    {{ .Release.Name }}
+   Namespace:       {{ .Release.Namespace }}
+
+2. Get the frontend URL:
+
+{{- if .Values.ingress.enabled }}
+{{- $baseDomain := .Values.global.baseDomain | default "" }}
+{{- $subdomain := .Values.global.frontendSubdomain | default "finance-agent" }}
+{{- if $baseDomain }}
+  http://{{ $subdomain }}.{{ $baseDomain }}
+{{- else }}
+  oc get ingress {{ include "finance-agent-frontend.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.rules[0].host}'
+{{- end }}
+{{- else }}
+  export POD_NAME=$(oc get pods --namespace {{ .Release.Namespace }} -l "{{ include "finance-agent-frontend.selectorLabels" . }}" -o jsonpath="{.items[0].metadata.name}")
+  oc --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:8080
+  echo "Frontend URL: http://127.0.0.1:8080"
+{{- end }}
+
+3. OpenShift notes:
+   - The pod runs under an arbitrary UID assigned by the namespace SCC (restricted-v2 by default).
+   - Ensure you built the image with Dockerfile.openshift (nginx-unprivileged, port 8080).
+   - The nginx listener is on port 8080; the Ingress (openshift-default) handles external traffic.
+   - Ingress class used: {{ .Values.ingress.className }}
+   - If you need a specific SCC, bind it to the ServiceAccount:
+       oc adm policy add-scc-to-user <scc> -z {{ include "finance-agent-frontend.serviceAccountName" . }} -n {{ .Release.Namespace }}
