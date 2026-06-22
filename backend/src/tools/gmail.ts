@@ -19,21 +19,23 @@ function getMailClient(authClient?: OAuth2Client) {
 export async function fetchEmails(options: FetchOptions, authClient?: OAuth2Client) {
     const mode = options.mode;
     let query = "";
+    const excludeCategories = "-category:promotions -category:social -category:forums";
     switch (mode) {
         case "unprocessed":
-            query = "-label:finance-processed";
+            query = `-label:finance-processed ${excludeCategories}`;
             break;
         case "backfill":
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
             const dateStr = sixMonthsAgo.toISOString().split("T")[0]?.replace(/-/g, "/");
-            query = `-label:finance-processed after:${dateStr}`;
+            query = `-label:finance-processed after:${dateStr} ${excludeCategories}`;
             break;
         case "reprocess":
             query = [
                 "label:finance-processed",
                 options.after ? `after:${options.after}` : "",
-                options.before ? `before:${options.before}` : ""
+                options.before ? `before:${options.before}` : "",
+                excludeCategories
             ].filter(Boolean).join(" ");
             break;
     }
