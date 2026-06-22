@@ -1,5 +1,6 @@
 import { gmail_v1, google } from "googleapis";
 import { getAuthClient } from "../auth/google.js";
+import { buildBankFromFilter } from "../data/bankDomains.js";
 
 type OAuth2Client = ReturnType<typeof getAuthClient>;
 
@@ -20,22 +21,24 @@ export async function fetchEmails(options: FetchOptions, authClient?: OAuth2Clie
     const mode = options.mode;
     let query = "";
     const excludeCategories = "-category:promotions -category:social -category:forums";
+    const bankFilter = buildBankFromFilter();
     switch (mode) {
         case "unprocessed":
-            query = `-label:finance-processed ${excludeCategories}`;
+            query = `-label:finance-processed ${excludeCategories} ${bankFilter}`;
             break;
         case "backfill":
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
             const dateStr = sixMonthsAgo.toISOString().split("T")[0]?.replace(/-/g, "/");
-            query = `-label:finance-processed after:${dateStr} ${excludeCategories}`;
+            query = `-label:finance-processed after:${dateStr} ${excludeCategories} ${bankFilter}`;
             break;
         case "reprocess":
             query = [
                 "label:finance-processed",
                 options.after ? `after:${options.after}` : "",
                 options.before ? `before:${options.before}` : "",
-                excludeCategories
+                excludeCategories,
+                bankFilter
             ].filter(Boolean).join(" ");
             break;
     }

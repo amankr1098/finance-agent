@@ -6,6 +6,7 @@ import { getAuthClientForUser } from "../auth/google.js";
 import { getUser } from "../db/users.js";
 import { saveFinanceEmail, saveExpense } from "../db/expenses.js";
 
+
 export interface ProcessEmailsResult {
     listFinance: ExpenseOutput[];
     listSubject: string[];
