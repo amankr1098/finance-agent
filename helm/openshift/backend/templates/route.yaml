@@ -4,8 +4,8 @@
 {{- $baseDomain := .Values.global.baseDomain | default "" -}}
 {{- $subdomain := .Values.global.backendSubdomain | default "finance-agent-api" -}}
 {{- $computedHost := printf "%s.%s" $subdomain $baseDomain -}}
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: route.openshift.io/v1
+kind: Route
 metadata:
   name: {{ $fullName }}
   labels:
@@ -15,22 +15,15 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- end }}
-  {{- if .Values.ingress.tls }}
+  host: {{ $computedHost | quote }}
+  to:
+    kind: Service
+    name: {{ $fullName }}
+    weight: 100
+  port:
+    targetPort: {{ $svcPort }}
   tls:
-    {{- toYaml .Values.ingress.tls | nindent 4 }}
-  {{- end }}
-  rules:
-    - host: {{ $computedHost | quote }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  number: {{ $svcPort }}
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
 {{- end }}

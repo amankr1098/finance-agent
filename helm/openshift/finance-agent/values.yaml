@@ -42,12 +42,10 @@ backend:
     type: ClusterIP
     port: 8000
 
-  # OpenShift Ingress (openshift-default ingress controller)
+  # OpenShift Route (edge TLS via cluster wildcard cert)
   ingress:
     enabled: true
-    className: "openshift-default"
     annotations: {}
-    tls: []
 
   # Non-sensitive runtime config
   env:
@@ -100,12 +98,10 @@ frontend:
     type: ClusterIP
     port: 8080
 
-  # OpenShift Ingress (openshift-default ingress controller)
+  # OpenShift Route (edge TLS via cluster wildcard cert)
   ingress:
     enabled: true
-    className: "openshift-default"
     annotations: {}
-    tls: []
 
   # Runtime config injected into /config.js by entrypoint.sh
   # API_BASE_URL is computed from global.baseDomain in the configmap template
