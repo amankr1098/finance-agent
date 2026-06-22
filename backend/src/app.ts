@@ -1,4 +1,4 @@
-import express, { type Application } from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import oauthRoutes from "./auth/oauthRoutes.js";
@@ -12,7 +12,7 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
   .map((o) => o.trim())
   .filter(Boolean);
 
-const app: Application = express();
+const app: ReturnType<typeof express> = express();
 
 app.use(
   cors({
