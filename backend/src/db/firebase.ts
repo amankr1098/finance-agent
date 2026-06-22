@@ -35,7 +35,7 @@ function ensureApp() {
   const serviceAccount = loadServiceAccount();
   initializeApp({
     credential: cert(serviceAccount),
-    projectId: process.env.FIREBASE_PROJECT_ID ?? (serviceAccount as { project_id?: string }).project_id,
+    projectId: process.env.FIREBASE_PROJECT_ID as string ?? (serviceAccount as { project_id?: string }).project_id,
   });
 }
 
