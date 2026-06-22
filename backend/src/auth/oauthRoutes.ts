@@ -110,11 +110,25 @@ router.get("/auth/google/callback", async (req: Request, res: Response) => {
     // Sync profile fields into the Firebase Auth record so that the client-side
     // User object returned by onAuthStateChanged has email, displayName and
     // photoURL populated after signInWithCustomToken.
-    await adminAuth().updateUser(sub, {
-      email: profile.email,
-      displayName: profile.name ?? "",
-      photoURL: profile.picture ?? "",
-    });
+    // For first-time sign-in the Auth record doesn't exist yet, so we create it.
+    try {
+      await adminAuth().updateUser(sub, {
+        email: profile.email,
+        displayName: profile.name ?? "",
+        photoURL: profile.picture ?? "",
+      });
+    } catch (authErr: any) {
+      if (authErr.code === "auth/user-not-found") {
+        await adminAuth().createUser({
+          uid: sub,
+          email: profile.email,
+          displayName: profile.name ?? "",
+          photoURL: profile.picture ?? "",
+        });
+      } else {
+        throw authErr;
+      }
+    }
 
     const customToken = await adminAuth().createCustomToken(sub);
 
