@@ -3,7 +3,8 @@
 {{- $svcPort := .Values.service.port -}}
 {{- $baseDomain := .Values.global.baseDomain | default "" -}}
 {{- $subdomain := .Values.global.backendSubdomain | default "finance-agent-api" -}}
-{{- $computedHost := printf "%s.%s" $subdomain $baseDomain -}}
+{{- $namespaceInHost := .Values.global.namespaceInHost | default false -}}
+{{- $computedHost := ternary (printf "%s-%s.%s" $subdomain .Release.Namespace $baseDomain) (printf "%s.%s" $subdomain $baseDomain) $namespaceInHost -}}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:

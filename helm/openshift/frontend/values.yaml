@@ -4,6 +4,10 @@ global:
   baseDomain: ""             # e.g. apps.i40sno-acm.mavdallab.com
   backendSubdomain: finance-agent-api
   frontendSubdomain: finance-agent
+  # Set to true when deploying to multiple namespaces on the same cluster.
+  # Appends the release namespace to the route hostname to avoid conflicts:
+  #   finance-agent-<namespace>.<baseDomain>
+  namespaceInHost: false
 
 replicaCount: 1
 

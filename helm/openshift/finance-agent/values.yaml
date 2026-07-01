@@ -8,12 +8,22 @@
 #     backend  → https://finance-agent-api.<baseDomain>
 #     frontend → https://finance-agent.<baseDomain>
 #
+# MULTI-NAMESPACE DEPLOYMENTS (dev / staging / prod on the same cluster):
+#   OpenShift only allows ONE namespace to own a given Route hostname.
+#   Set global.namespaceInHost=true so each namespace gets a unique host:
+#     backend  → https://finance-agent-api-<namespace>.<baseDomain>
+#     frontend → https://finance-agent-<namespace>.<baseDomain>
+#
+#   helm install finance-agent helm/openshift/finance-agent \
+#     -n finance-agent-dev --create-namespace \
+#     --set global.namespaceInHost=true
+#
 # Pre-requisites:
 #   1. Build images with Dockerfile.openshift (not Dockerfile).
 #   2. Push to your registry and set image.repository / image.tag below.
 #   3. Run: helm dependency update helm/openshift/finance-agent
 #
-# Deploy:
+# Deploy (single namespace):
 #   helm install finance-agent helm/openshift/finance-agent \
 #     -n <namespace> --create-namespace
 # ===========================================================================
@@ -26,6 +36,11 @@ global:
   # Subdomain prefixes (change if you want different hostnames)
   backendSubdomain: finance-agent-api
   frontendSubdomain: finance-agent
+  # Set to true when deploying to multiple namespaces on the same cluster.
+  # Appends the release namespace to each route hostname to prevent conflicts:
+  #   false (default) → finance-agent-api.<baseDomain>
+  #   true            → finance-agent-api-<namespace>.<baseDomain>
+  namespaceInHost: false
 
 # ---------------------------------------------------------------------------
 # Backend sub-chart overrides  (alias: backend)
